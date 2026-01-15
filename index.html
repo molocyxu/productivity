@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orbit Command Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-theme="aurora">
+    <div class="app">
+      <header class="app-header">
+        <div class="branding">
+          <div class="logo">Orbit</div>
+          <div class="subtitle">Daily command center</div>
+        </div>
+        <div class="header-center">
+          <div class="today">
+            <span id="today-date"></span>
+            <span class="clock" id="live-clock"></span>
+          </div>
+          <div class="header-metrics">
+            <div class="metric">
+              <span class="metric-label">Events</span>
+              <span class="metric-value" id="metric-events">0</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Tasks</span>
+              <span class="metric-value" id="metric-tasks">0</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Focus</span>
+              <span class="metric-value" id="metric-focus">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <label class="select small">
+            Theme
+            <select id="theme-select"></select>
+          </label>
+          <div class="header-buttons">
+            <button id="load-sample" class="ghost">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              Load sample day
+            </button>
+            <button id="reset-data" class="ghost danger">
+              <i class="fa-solid fa-trash"></i>
+              Reset
+            </button>
+          </div>
+          <div class="sync-status">
+            <i class="fa-solid fa-bolt"></i>
+            Local-only mode
+          </div>
+        </div>
+      </header>
+
+      <main id="main-split" class="split split-horizontal">
+        <section id="calendar-column" class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Today's schedule</h2>
+              <p>Only your local-day events are surfaced here.</p>
+            </div>
+            <div class="panel-badge">
+              <i class="fa-solid fa-calendar-day"></i>
+              <span id="calendar-summary">No events</span>
+            </div>
+          </div>
+          <div class="panel-body calendar-body">
+            <div class="calendar-grid">
+              <div class="form-card">
+                <div class="card-header">
+                  <h3>Create event</h3>
+                  <p>Build out rich details like a full calendar.</p>
+                </div>
+                <form id="event-form" class="form-grid">
+                  <input type="hidden" id="event-id" />
+                  <label class="field span-2">
+                    Title
+                    <input id="event-title" type="text" placeholder="Stand-up sync" required />
+                  </label>
+                  <label class="field">
+                    Date
+                    <input id="event-date" type="date" />
+                  </label>
+                  <label class="field">
+                    Start
+                    <input id="event-start" type="time" />
+                  </label>
+                  <label class="field">
+                    End
+                    <input id="event-end" type="time" />
+                  </label>
+                  <label class="field toggle">
+                    All-day
+                    <input id="event-allday" type="checkbox" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <label class="field">
+                    Priority
+                    <select id="event-priority">
+                      <option value="normal">Normal</option>
+                      <option value="important">Important</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    Calendar
+                    <select id="event-calendar">
+                      <option value="Personal">Personal</option>
+                      <option value="Work">Work</option>
+                      <option value="Focus">Focus</option>
+                      <option value="Social">Social</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    Visibility
+                    <select id="event-visibility">
+                      <option value="Default">Default</option>
+                      <option value="Private">Private</option>
+                      <option value="Public">Public</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    Reminder
+                    <select id="event-reminder">
+                      <option value="None">None</option>
+                      <option value="5 minutes">5 minutes</option>
+                      <option value="15 minutes">15 minutes</option>
+                      <option value="30 minutes">30 minutes</option>
+                      <option value="1 hour">1 hour</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    Repeat
+                    <select id="event-repeat">
+                      <option value="None">Does not repeat</option>
+                      <option value="Daily">Daily</option>
+                      <option value="Weekly">Weekly</option>
+                      <option value="Monthly">Monthly</option>
+                    </select>
+                  </label>
+                  <label class="field span-2">
+                    Location
+                    <input id="event-location" type="text" placeholder="Studio A or Zoom" />
+                  </label>
+                  <label class="field span-2">
+                    Meeting link
+                    <input id="event-link" type="url" placeholder="https://meet.google.com/..." />
+                  </label>
+                  <label class="field span-2">
+                    Guests
+                    <input id="event-guests" type="text" placeholder="alex@, dev team, ..." />
+                  </label>
+                  <label class="field span-2">
+                    Description
+                    <textarea id="event-description" rows="3" placeholder="Agenda, notes, prep..."></textarea>
+                  </label>
+                  <label class="field span-2 color-field">
+                    Event color
+                    <div class="color-row">
+                      <input id="event-color" type="color" value="#6c7bff" />
+                      <div class="color-palette" id="event-color-palette"></div>
+                    </div>
+                  </label>
+                  <div class="form-actions span-2">
+                    <button class="primary" type="submit">
+                      <i class="fa-solid fa-plus"></i>
+                      Save event
+                    </button>
+                    <button class="ghost" id="event-clear" type="button">
+                      Clear
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <div class="list-card">
+                <div class="card-header">
+                  <h3>Today</h3>
+                  <p id="event-subtitle">Keep the day tight and focused.</p>
+                </div>
+                <div class="list-header">
+                  <span class="list-count" id="event-count">0 events</span>
+                  <span class="list-hint">Hover for details</span>
+                </div>
+                <div id="event-list" class="scrollable"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="todo-column" class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>To-do command list</h2>
+              <p>Track tasks with future release dates and due dates.</p>
+            </div>
+            <div class="panel-badge">
+              <i class="fa-solid fa-list-check"></i>
+              <span id="todo-summary">No tasks</span>
+            </div>
+          </div>
+          <div class="panel-body todo-body">
+            <div class="todo-grid">
+              <div class="form-card">
+                <div class="card-header">
+                  <h3>Add task</h3>
+                  <p>Attach start dates, links, and priority.</p>
+                </div>
+                <form id="todo-form" class="form-grid">
+                  <input type="hidden" id="todo-id" />
+                  <label class="field span-2">
+                    Task
+                    <input id="todo-title" type="text" placeholder="Outline chapter 5" required />
+                  </label>
+                  <label class="field">
+                    Start date
+                    <input id="todo-start" type="date" />
+                  </label>
+                  <label class="field">
+                    Due date
+                    <input id="todo-due" type="date" />
+                  </label>
+                  <label class="field span-2">
+                    Reference link
+                    <input id="todo-link" type="url" placeholder="https://..." />
+                  </label>
+                  <label class="field">
+                    Priority
+                    <select id="todo-priority">
+                      <option value="normal">Normal</option>
+                      <option value="important">Important</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </label>
+                  <label class="field span-2">
+                    Notes
+                    <textarea id="todo-notes" rows="3" placeholder="Requirements, notes, blockers..."></textarea>
+                  </label>
+                  <div class="form-actions span-2">
+                    <button class="primary" type="submit">
+                      <i class="fa-solid fa-plus"></i>
+                      Save task
+                    </button>
+                    <button class="ghost" id="todo-clear" type="button">
+                      Clear
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <div class="list-card">
+                <div class="card-header">
+                  <h3>Task queue</h3>
+                  <p>Stay ahead of both start dates and deadlines.</p>
+                </div>
+                <div class="list-header">
+                  <span class="list-count" id="todo-count">0 tasks</span>
+                  <span class="list-hint">Tap to complete</span>
+                </div>
+                <div id="todo-list" class="scrollable"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="right-column" class="split split-vertical">
+          <section id="status-panel" class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Status studio</h2>
+                <p>Set quick mood or availability states.</p>
+              </div>
+              <div class="panel-badge">
+                <i class="fa-solid fa-sparkles"></i>
+                <span id="status-summary">No statuses</span>
+              </div>
+            </div>
+            <div class="panel-body">
+              <form id="status-form" class="status-form">
+                <label class="field">
+                  Label
+                  <input id="status-label" type="text" placeholder="Focused" required />
+                </label>
+                <label class="field">
+                  Color
+                  <input id="status-color" type="color" value="#22c55e" />
+                </label>
+                <label class="field">
+                  Image
+                  <input id="status-image" type="file" accept="image/*" />
+                </label>
+                <button class="primary" type="submit">
+                  <i class="fa-solid fa-plus"></i>
+                  Add status
+                </button>
+              </form>
+              <div id="status-list" class="status-list scrollable"></div>
+            </div>
+          </section>
+
+          <section id="insights-panel" class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Upcoming highlights</h2>
+                <p>Urgent events and due dates in view.</p>
+              </div>
+              <div class="panel-badge">
+                <i class="fa-solid fa-location-arrow"></i>
+                <span id="insight-summary">No upcoming items</span>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="insight-group">
+                <h3>Urgent &amp; important events</h3>
+                <div id="urgent-events" class="insight-list"></div>
+              </div>
+              <div class="insight-group">
+                <h3>Due dates approaching</h3>
+                <div id="due-soon" class="insight-list"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="notes-panel" class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Notes &amp; reminders</h2>
+                <p>Capture free-form thoughts instantly.</p>
+              </div>
+              <div class="panel-badge">
+                <i class="fa-solid fa-pen-nib"></i>
+                <span id="notes-summary">Autosaved</span>
+              </div>
+            </div>
+            <div class="panel-body">
+              <textarea
+                id="notes-input"
+                class="notes-area"
+                rows="12"
+                placeholder="Type reminders, ideas, quick notes..."
+              ></textarea>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div id="hover-tooltip" class="hover-tooltip" aria-hidden="true"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/split.js/dist/split.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
