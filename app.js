@@ -2082,11 +2082,11 @@ function sortCalendarEvents(events) {
     }
     
     // 2. Sort by priority: urgent > important > normal
-    const priorityA = priorityOrder[a.priority] ?? 2;
-    const priorityB = priorityOrder[b.priority] ?? 2;
-    if (priorityA !== priorityB) {
-      return priorityA - priorityB;
-    }
+    // const priorityA = priorityOrder[a.priority] ?? 2;
+    // const priorityB = priorityOrder[b.priority] ?? 2;
+    // if (priorityA !== priorityB) {
+    //   return priorityA - priorityB;
+    // }
     
     // 3. Sort by start time (only for timed events)
     if (!a.allDay && !b.allDay) {
