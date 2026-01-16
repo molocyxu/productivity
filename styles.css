@@ -223,12 +223,23 @@ body[data-theme="mono"] {
   flex-direction: column;
   gap: 4px;
   min-width: 80px;
-  transition: background var(--transition), transform var(--transition);
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
 }
 
 .metric:hover {
   background: rgba(255, 255, 255, 0.12);
   transform: translateY(-1px);
+}
+
+.metric.overdue-active {
+  background: rgba(255, 140, 140, 0.15);
+  border: 1px solid rgba(255, 140, 140, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+}
+
+.metric.overdue-active .metric-value {
+  color: #ff6b6b;
+  font-weight: 700;
 }
 
 .metric-label {
@@ -1934,7 +1945,7 @@ input[type="color"]:focus {
 .sticky-image {
   position: fixed;
   bottom: 0px;
-  left: 216px;
+  left: 288px;
   z-index: 50;
   height: 120px;
   width: auto;

@@ -73,7 +73,7 @@ async function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw);
         const loaded = { ...defaultState, ...parsed };
         // Ensure currentStatus exists
         if (!loaded.currentStatus) {
@@ -110,7 +110,7 @@ async function saveState() {
     } else {
       // Fallback to localStorage if IndexedDB not available
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       } catch (error) {
         if (error.name === "QuotaExceededError") {
           console.error("localStorage quota exceeded. Please use IndexedDB.");
@@ -144,27 +144,27 @@ async function init() {
       state = { ...defaultState };
     }
     
-    cacheElements();
-    initThemeSelect();
-    initColorPalette();
-    initSplitPanels();
-    bindForms();
-    bindLists();
-    bindControls();
-    initNotes();
-    clearEventForm();
-    clearTodoForm();
+  cacheElements();
+  initThemeSelect();
+  initColorPalette();
+  initSplitPanels();
+  bindForms();
+  bindLists();
+  bindControls();
+  initNotes();
+  clearEventForm();
+  clearTodoForm();
     updateFileInputLabel();
-    applyTheme(state.theme);
-    updateClock();
-    renderAll();
-    setInterval(updateClock, 1000);
-    setInterval(() => {
-      renderEvents();
+  applyTheme(state.theme);
+  updateClock();
+  renderAll();
+  setInterval(updateClock, 1000);
+  setInterval(() => {
+    renderEvents();
       renderTomorrowEvents();
-      renderInsights();
-      renderMetrics();
-    }, 60000);
+    renderInsights();
+    renderMetrics();
+  }, 60000);
   } catch (error) {
     console.error("Error during initialization:", error);
     // Fallback: use default state if initialization fails
@@ -291,7 +291,7 @@ function cacheElements() {
   elements.notesSummary = document.getElementById("notes-summary");
   elements.metricEvents = document.getElementById("metric-events");
   elements.metricTasks = document.getElementById("metric-tasks");
-  elements.metricFocus = document.getElementById("metric-focus");
+  elements.metricOverdue = document.getElementById("metric-overdue");
   elements.loadSample = document.getElementById("load-sample");
   elements.resetData = document.getElementById("reset-data");
   elements.settingsMenuButton = document.getElementById("settings-menu-button");
@@ -1590,15 +1590,34 @@ function renderInsights() {
 function renderMetrics() {
   const today = getTodayISO();
   const todaysEvents = state.events.filter((event) => shouldEventAppearOnDate(event, today));
-  const focusCount =
-    todaysEvents.filter((event) => event.priority !== "normal").length +
-    state.todos.filter((todo) => {
-      const status = getTodoStatus(todo).status;
-      return status === "overdue" || status === "active";
+  
+  // Count incomplete in-progress tasks (past start date or no start date)
+  const inProgressTasks = state.todos.filter((todo) => {
+    if (todo.completed) return false;
+    // Task is in-progress if it has no start date OR start date is today or in the past
+    if (!todo.startDate) return true;
+    return todo.startDate <= today;
     }).length;
+  
+  // Count overdue tasks
+  const overdueTasks = state.todos.filter((todo) => {
+    if (todo.completed) return false;
+    return todo.dueDate && todo.dueDate < today;
+  }).length;
+  
   elements.metricEvents.textContent = todaysEvents.length;
-  elements.metricTasks.textContent = state.todos.length;
-  elements.metricFocus.textContent = focusCount;
+  elements.metricTasks.textContent = inProgressTasks;
+  elements.metricOverdue.textContent = overdueTasks;
+  
+  // Add visual styling to overdue metric when there are overdue tasks
+  const overdueMetric = elements.metricOverdue.closest('.metric');
+  if (overdueMetric) {
+    if (overdueTasks > 0) {
+      overdueMetric.classList.add('overdue-active');
+    } else {
+      overdueMetric.classList.remove('overdue-active');
+    }
+  }
 }
 
 function buildEventCard(event, dateString = null) {
