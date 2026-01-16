@@ -20,6 +20,10 @@ body {
   min-height: 100vh;
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 body[data-theme="aurora"] {
   --bg-1: #121826;
   --bg-2: #1b2b4a;
@@ -74,17 +78,17 @@ body[data-theme="mono"] {
 
 .app {
   min-height: 100vh;
-  padding: 24px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .app-header {
   display: grid;
   grid-template-columns: minmax(200px, 1fr) minmax(260px, 2fr) minmax(260px, 1.2fr);
-  gap: 18px;
-  padding: 18px 22px;
+  gap: 14px;
+  padding: 12px 18px;
   background: var(--panel-strong);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -214,6 +218,18 @@ body[data-theme="mono"] {
   color: var(--muted);
 }
 
+.panel-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-action {
+  border-radius: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
 .panel-body {
   display: flex;
   flex-direction: column;
@@ -229,6 +245,11 @@ body[data-theme="mono"] {
   gap: 16px;
   min-height: 0;
   flex: 1;
+}
+
+.calendar-grid.single-column,
+.todo-grid.single-column {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .form-card,
@@ -279,6 +300,51 @@ body[data-theme="mono"] {
   font-size: 13px;
   font-family: "Inter", sans-serif;
   transition: border var(--transition), box-shadow var(--transition);
+}
+
+.field select,
+.select select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08));
+  background-position: calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px),
+    calc(100% - 36px) 50%;
+  background-size: 6px 6px, 6px 6px, 1px 18px;
+  background-repeat: no-repeat;
+  padding-right: 40px;
+}
+
+.field select option,
+.select select option {
+  background: var(--panel-strong);
+  color: var(--text);
+}
+
+.field input[type="file"] {
+  padding: 6px 10px;
+  color: var(--muted);
+}
+
+.field input[type="file"]::file-selector-button {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.field input[type="file"]::-webkit-file-upload-button {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  margin-right: 10px;
+  cursor: pointer;
 }
 
 .field input:focus,
@@ -359,6 +425,38 @@ body[data-theme="mono"] {
   gap: 10px;
 }
 
+.repeat-custom {
+  display: none;
+  gap: 10px;
+}
+
+.repeat-custom.active {
+  display: flex;
+  flex-direction: column;
+}
+
+.repeat-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.repeat-day {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.repeat-day input {
+  accent-color: var(--accent);
+}
+
 button {
   border: none;
   border-radius: 999px;
@@ -395,6 +493,24 @@ button.ghost.danger {
   justify-content: space-between;
   font-size: 12px;
   color: var(--muted);
+}
+
+.list-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggle-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.toggle-inline input {
+  accent-color: var(--accent);
 }
 
 .scrollable {
@@ -513,10 +629,33 @@ button.ghost.danger {
   font-weight: 600;
 }
 
+.todo-card.has-link {
+  cursor: pointer;
+}
+
+.todo-card.has-link:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.todo-card.overdue {
+  border-left: 4px solid #f43f5e;
+  box-shadow: 0 10px 24px rgba(244, 63, 94, 0.2);
+}
+
 .todo-status {
   margin-top: 8px;
   font-size: 11px;
   color: var(--muted);
+}
+
+.todo-warning {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #fda4af;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .status-form {
@@ -535,6 +674,15 @@ button.ghost.danger {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
+}
+
+#status-panel .panel-body {
+  min-height: 0;
+}
+
+#status-panel .status-list {
+  flex: 1;
+  min-height: 0;
 }
 
 .status-card {
@@ -576,6 +724,21 @@ button.ghost.danger {
   flex-direction: column;
 }
 
+#insights-panel .panel-body {
+  overflow: hidden;
+}
+
+#insights-panel .insight-group {
+  flex: 1;
+  min-height: 0;
+}
+
+#insights-panel .insight-list {
+  overflow: auto;
+  min-height: 0;
+  padding-right: 6px;
+}
+
 .insight-item {
   font-size: 13px;
   display: flex;
@@ -614,6 +777,23 @@ button.ghost.danger {
   color: var(--muted);
 }
 
+.select select {
+  background-color: var(--field);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: "Inter", sans-serif;
+  transition: border var(--transition), box-shadow var(--transition);
+}
+
+.select select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(108, 123, 255, 0.25);
+}
+
 .select.small select {
   min-width: 140px;
 }
@@ -633,6 +813,45 @@ button.ghost.danger {
   transform: translate(-9999px, -9999px);
   transition: opacity var(--transition);
   z-index: 50;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 90;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 13, 20, 0.72);
+}
+
+.modal-content {
+  position: relative;
+  z-index: 1;
+  width: min(860px, 94vw);
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+#right-column {
+  min-height: 0;
 }
 
 .hover-tooltip.visible {

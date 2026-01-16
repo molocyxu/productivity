@@ -24,7 +24,9 @@ const defaultState = {
   events: [],
   todos: [],
   statuses: [],
-  notes: ""
+  notes: "",
+  activeStatusId: "",
+  showFullTodoList: false
 };
 
 const elements = {};
@@ -50,9 +52,13 @@ function saveState() {
 
 function init() {
   cacheElements();
+  if (elements.todoFullToggle) {
+    elements.todoFullToggle.checked = state.showFullTodoList;
+  }
   initThemeSelect();
   initColorPalette();
   initSplitPanels();
+  initRepeatControls();
   bindForms();
   bindLists();
   bindControls();
@@ -65,6 +71,7 @@ function init() {
   setInterval(updateClock, 1000);
   setInterval(() => {
     renderEvents();
+    renderTodos();
     renderInsights();
     renderMetrics();
   }, 60000);
@@ -86,6 +93,10 @@ function cacheElements() {
   elements.eventVisibility = document.getElementById("event-visibility");
   elements.eventReminder = document.getElementById("event-reminder");
   elements.eventRepeat = document.getElementById("event-repeat");
+  elements.eventRepeatCustom = document.getElementById("event-repeat-custom");
+  elements.eventRepeatDays = elements.eventRepeatCustom
+    ? Array.from(elements.eventRepeatCustom.querySelectorAll("input[type='checkbox']"))
+    : [];
   elements.eventLocation = document.getElementById("event-location");
   elements.eventLink = document.getElementById("event-link");
   elements.eventGuests = document.getElementById("event-guests");
@@ -97,6 +108,8 @@ function cacheElements() {
   elements.eventSubtitle = document.getElementById("event-subtitle");
   elements.eventClear = document.getElementById("event-clear");
   elements.calendarSummary = document.getElementById("calendar-summary");
+  elements.openEventModal = document.getElementById("open-event-modal");
+  elements.eventModal = document.getElementById("event-modal");
   elements.todoForm = document.getElementById("todo-form");
   elements.todoId = document.getElementById("todo-id");
   elements.todoTitle = document.getElementById("todo-title");
@@ -109,12 +122,18 @@ function cacheElements() {
   elements.todoList = document.getElementById("todo-list");
   elements.todoCount = document.getElementById("todo-count");
   elements.todoSummary = document.getElementById("todo-summary");
+  elements.todoFullToggle = document.getElementById("todo-full-toggle");
+  elements.openTodoModal = document.getElementById("open-todo-modal");
+  elements.todoModal = document.getElementById("todo-modal");
   elements.statusForm = document.getElementById("status-form");
   elements.statusLabel = document.getElementById("status-label");
   elements.statusColor = document.getElementById("status-color");
   elements.statusImage = document.getElementById("status-image");
+  elements.statusSelect = document.getElementById("status-select");
   elements.statusList = document.getElementById("status-list");
   elements.statusSummary = document.getElementById("status-summary");
+  elements.openStatusModal = document.getElementById("open-status-modal");
+  elements.statusModal = document.getElementById("status-modal");
   elements.urgentEvents = document.getElementById("urgent-events");
   elements.dueSoon = document.getElementById("due-soon");
   elements.insightSummary = document.getElementById("insight-summary");
@@ -151,6 +170,18 @@ function initColorPalette() {
   });
 }
 
+function initRepeatControls() {
+  if (!elements.eventRepeat) return;
+  elements.eventRepeat.addEventListener("change", () => {
+    const showCustom = elements.eventRepeat.value === "Custom";
+    toggleRepeatCustom(showCustom);
+    if (!showCustom) {
+      setRepeatDays([]);
+    }
+  });
+  toggleRepeatCustom(elements.eventRepeat.value === "Custom");
+}
+
 function initSplitPanels() {
   if (typeof Split !== "function") return;
   Split(["#calendar-column", "#todo-column", "#right-column"], {
@@ -182,6 +213,7 @@ function bindForms() {
     renderEvents();
     renderInsights();
     renderMetrics();
+    closeModal(elements.eventModal);
   });
 
   elements.eventClear.addEventListener("click", clearEventForm);
@@ -206,6 +238,7 @@ function bindForms() {
     renderTodos();
     renderInsights();
     renderMetrics();
+    closeModal(elements.todoModal);
   });
 
   elements.todoClear.addEventListener("click", clearTodoForm);
@@ -215,16 +248,19 @@ function bindForms() {
     const label = elements.statusLabel.value.trim();
     if (!label) return;
     const imageData = await readFile(elements.statusImage.files[0]);
-    state.statuses.unshift({
+    const newStatus = {
       id: createId(),
       label,
       color: elements.statusColor.value,
       image: imageData || "",
       createdAt: new Date().toISOString()
-    });
+    };
+    state.statuses.unshift(newStatus);
+    state.activeStatusId = newStatus.id;
     saveState();
     elements.statusForm.reset();
     renderStatuses();
+    closeModal(elements.statusModal);
   });
 }
 
@@ -238,6 +274,8 @@ function bindLists() {
     const id = card.dataset.id;
     if (action === "edit-event") {
       fillEventForm(id);
+      openModal(elements.eventModal);
+      elements.eventTitle.focus();
     }
     if (action === "delete-event") {
       state.events = state.events.filter((item) => item.id !== id);
@@ -250,16 +288,24 @@ function bindLists() {
 
   elements.todoList.addEventListener("click", (event) => {
     const actionButton = event.target.closest("[data-action]");
-    if (!actionButton) return;
-    const action = actionButton.dataset.action;
     const card = event.target.closest(".todo-card");
     if (!card) return;
+    if (!actionButton) {
+      const link = card.dataset.link;
+      if (link) {
+        window.open(link, "_blank", "noopener");
+      }
+      return;
+    }
+    const action = actionButton.dataset.action;
     const id = card.dataset.id;
     if (action === "toggle-todo") {
       toggleTodo(id);
     }
     if (action === "edit-todo") {
       fillTodoForm(id);
+      openModal(elements.todoModal);
+      elements.todoTitle.focus();
     }
     if (action === "delete-todo") {
       state.todos = state.todos.filter((item) => item.id !== id);
@@ -318,13 +364,87 @@ function bindControls() {
   elements.resetData.addEventListener("click", () => {
     const confirmed = window.confirm("Reset all data for this dashboard?");
     if (!confirmed) return;
-    state = { ...defaultState, theme: state.theme };
+    state = {
+      ...defaultState,
+      theme: state.theme,
+      showFullTodoList: state.showFullTodoList
+    };
     saveState();
     clearEventForm();
     clearTodoForm();
     elements.notesInput.value = "";
     renderAll();
   });
+
+  elements.openEventModal.addEventListener("click", () => {
+    clearEventForm();
+    openModal(elements.eventModal);
+    elements.eventTitle.focus();
+  });
+
+  elements.openTodoModal.addEventListener("click", () => {
+    clearTodoForm();
+    openModal(elements.todoModal);
+    elements.todoTitle.focus();
+  });
+
+  elements.openStatusModal.addEventListener("click", () => {
+    elements.statusForm.reset();
+    openModal(elements.statusModal);
+    elements.statusLabel.focus();
+  });
+
+  elements.todoFullToggle.addEventListener("change", () => {
+    state.showFullTodoList = elements.todoFullToggle.checked;
+    saveState();
+    renderTodos();
+  });
+
+  elements.statusSelect.addEventListener("change", () => {
+    state.activeStatusId = elements.statusSelect.value;
+    saveState();
+    renderStatuses();
+  });
+
+  [elements.eventModal, elements.todoModal, elements.statusModal].forEach((modal) => {
+    modal.addEventListener("click", (event) => {
+      if (event.target.closest("[data-modal-close]")) {
+        closeModal(modal);
+      }
+    });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeAllModals();
+    }
+  });
+}
+
+function openModal(modal) {
+  if (!modal) return;
+  closeAllModals();
+  modal.classList.add("active");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+}
+
+function closeModal(modal) {
+  if (!modal) return;
+  modal.classList.remove("active");
+  modal.setAttribute("aria-hidden", "true");
+  if (!document.querySelector(".modal.active")) {
+    document.body.classList.remove("modal-open");
+  }
+}
+
+function closeAllModals() {
+  [elements.eventModal, elements.todoModal, elements.statusModal].forEach((modal) => {
+    if (!modal) return;
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+  });
+  document.body.classList.remove("modal-open");
 }
 
 function initNotes() {
@@ -370,7 +490,7 @@ function renderEvents() {
     .filter((item) => item.date === today)
     .sort(sortEventsByTime);
   if (!todaysEvents.length) {
-    list.innerHTML = `<div class="empty-state">No events yet. Add one above.</div>`;
+    list.innerHTML = `<div class="empty-state">No events yet. Use the + button to add one.</div>`;
   } else {
     list.innerHTML = todaysEvents.map((event) => buildEventCard(event)).join("");
   }
@@ -385,11 +505,20 @@ function renderEvents() {
 }
 
 function renderTodos() {
+  pruneExpiredCompletedTodos();
   const list = elements.todoList;
   const scroll = list.scrollTop;
-  const sortedTodos = [...state.todos].sort(sortTodosByDate);
+  elements.todoFullToggle.checked = state.showFullTodoList;
+  const visibleTodos = getVisibleTodos();
+  const sortedTodos = [...visibleTodos].sort(sortTodosByPriorityThenDate);
+  const today = getTodayISO();
+  const hiddenUpcoming = state.todos.some(
+    (todo) => !todo.completed && todo.startDate && todo.startDate > today
+  );
   if (!sortedTodos.length) {
-    list.innerHTML = `<div class="empty-state">Add tasks with start and due dates.</div>`;
+    list.innerHTML = hiddenUpcoming && !state.showFullTodoList
+      ? `<div class="empty-state">No active tasks. Toggle "See full list" to view upcoming work.</div>`
+      : `<div class="empty-state">Add tasks with start and due dates.</div>`;
   } else {
     list.innerHTML = sortedTodos.map((todo) => buildTodoCard(todo)).join("");
   }
@@ -403,35 +532,40 @@ function renderTodos() {
 
 function renderStatuses() {
   const list = elements.statusList;
+  let updatedSelection = false;
   if (!state.statuses.length) {
     list.innerHTML = `<div class="empty-state">Add a status to get started.</div>`;
+    elements.statusSelect.innerHTML = `<option value="">No statuses yet</option>`;
+    elements.statusSelect.disabled = true;
+    if (state.activeStatusId) {
+      state.activeStatusId = "";
+      updatedSelection = true;
+    }
   } else {
-    list.innerHTML = state.statuses
-      .map((status) => {
-        const imageMarkup = status.image
-          ? `<img src="${status.image}" alt="${escapeHtml(status.label)} image" />`
-          : "";
-        return `
-          <div class="status-card" style="border-color:${status.color}">
-            <div class="status-header">
-              <span class="status-label">${escapeHtml(status.label)}</span>
-              <button class="icon-button" data-action="delete-status" data-id="${status.id}" title="Remove">
-                <i class="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-            <span class="badge" style="color:${status.color}">Active status</span>
-            ${imageMarkup}
-          </div>
-        `;
-      })
+    elements.statusSelect.disabled = false;
+    elements.statusSelect.innerHTML = state.statuses
+      .map((status) => `<option value="${status.id}">${escapeHtml(status.label)}</option>`)
       .join("");
+    if (!state.activeStatusId || !state.statuses.find((status) => status.id === state.activeStatusId)) {
+      state.activeStatusId = state.statuses[0].id;
+      updatedSelection = true;
+    }
+    elements.statusSelect.value = state.activeStatusId;
+    const activeStatus = state.statuses.find((status) => status.id === state.activeStatusId);
+    list.innerHTML = activeStatus
+      ? buildStatusCard(activeStatus)
+      : `<div class="empty-state">Select a status to display.</div>`;
   }
   elements.statusSummary.textContent = state.statuses.length
     ? `${state.statuses.length} saved`
     : "No statuses";
+  if (updatedSelection) {
+    saveState();
+  }
 }
 
 function renderInsights() {
+  pruneExpiredCompletedTodos();
   const today = getTodayISO();
   const upcomingEvents = state.events.filter((event) => {
     if (event.priority === "normal") return false;
@@ -450,7 +584,7 @@ function renderInsights() {
     : `<div class="empty-state">No urgent events in the next ${INSIGHT_RANGE_DAYS} days.</div>`;
   elements.dueSoon.innerHTML = upcomingTodos.length
     ? upcomingTodos
-        .sort(sortTodosByDate)
+        .sort(sortTodosByDueDate)
         .map((todo) => buildInsightItem(todo.title, todo.dueDate, null))
         .join("")
     : `<div class="empty-state">No due dates within ${INSIGHT_RANGE_DAYS} days.</div>`;
@@ -461,6 +595,7 @@ function renderInsights() {
 }
 
 function renderMetrics() {
+  pruneExpiredCompletedTodos();
   const today = getTodayISO();
   const todaysEvents = state.events.filter((event) => event.date === today);
   const focusCount =
@@ -481,10 +616,6 @@ function buildEventCard(event) {
     : `${formatTime(event.startTime)} - ${formatTime(event.endTime)}`;
   const safeLocation = escapeHtml(event.location || "");
   const safeGuests = escapeHtml(event.guests || "");
-  const safeCalendar = escapeHtml(event.calendar || "Calendar");
-  const safeVisibility = escapeHtml(event.visibility || "Default");
-  const safeReminder = escapeHtml(event.reminder || "None");
-  const safeRepeat = escapeHtml(event.repeat || "None");
   return `
     <div class="event-card ${event.priority} ${status.status}" data-id="${event.id}" style="border-left-color:${event.color}">
       <div class="event-top">
@@ -503,13 +634,6 @@ function buildEventCard(event) {
         ${safeLocation ? `<span><i class="fa-solid fa-location-dot"></i> ${safeLocation}</span>` : ""}
         ${safeGuests ? `<span><i class="fa-solid fa-user-group"></i> ${safeGuests}</span>` : ""}
       </div>
-      <div class="event-meta">
-        <span class="badge">${safeCalendar}</span>
-        <span class="badge">${safeVisibility}</span>
-        <span class="badge">${safeReminder}</span>
-        <span class="badge">${safeRepeat}</span>
-      </div>
-      <span class="status-pill">${status.label}</span>
     </div>
   `;
 }
@@ -517,8 +641,15 @@ function buildEventCard(event) {
 function buildTodoCard(todo) {
   const status = getTodoStatus(todo);
   const link = safeUrl(todo.link);
+  const priority = getTodoPriority(todo, status);
+  const linkAttr = link ? `data-link="${escapeHtml(link)}"` : "";
+  const linkClass = link ? "has-link" : "";
+  const overdueWarning =
+    status.status === "overdue"
+      ? `<div class="todo-warning"><i class="fa-solid fa-triangle-exclamation"></i> Overdue · ${formatShortDate(todo.dueDate)}</div>`
+      : "";
   return `
-    <div class="todo-card ${todo.completed ? "completed" : ""} ${todo.priority}" data-id="${todo.id}">
+    <div class="todo-card ${todo.completed ? "completed" : ""} ${priority} ${status.status === "overdue" ? "overdue" : ""} ${linkClass}" data-id="${todo.id}" ${linkAttr}>
       <div class="todo-top">
         <span>${formatDateRange(todo.startDate, todo.dueDate)}</span>
         <div class="todo-actions">
@@ -535,9 +666,25 @@ function buildTodoCard(todo) {
       </div>
       <div class="todo-title">${escapeHtml(todo.title)}</div>
       ${todo.notes ? `<div class="todo-meta">${escapeHtml(todo.notes)}</div>` : ""}
-      ${link ? `<a class="badge" href="${link}" target="_blank" rel="noreferrer">Open link</a>` : ""}
-      <span class="badge">${escapeHtml(todo.priority)}</span>
-      <div class="todo-status">${status.label}</div>
+      ${overdueWarning}
+    </div>
+  `;
+}
+
+function buildStatusCard(status) {
+  const imageMarkup = status.image
+    ? `<img src="${status.image}" alt="${escapeHtml(status.label)} image" />`
+    : "";
+  return `
+    <div class="status-card" style="border-color:${status.color}">
+      <div class="status-header">
+        <span class="status-label">${escapeHtml(status.label)}</span>
+        <button class="icon-button" data-action="delete-status" data-id="${status.id}" title="Remove">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <span class="badge" style="color:${status.color}">Active status</span>
+      ${imageMarkup}
     </div>
   `;
 }
@@ -554,6 +701,7 @@ function buildInsightItem(title, date, time) {
 function buildEventTooltip(event) {
   const status = getEventStatus(event);
   const link = safeUrl(event.link);
+  const repeatLabel = formatRepeatLabel(event);
   const timeLabel = event.allDay
     ? "All day"
     : `${formatTime(event.startTime)} - ${formatTime(event.endTime)}`;
@@ -567,11 +715,18 @@ function buildEventTooltip(event) {
       ${event.calendar ? `<div><i class="fa-solid fa-layer-group"></i> ${escapeHtml(event.calendar)}</div>` : ""}
       ${event.visibility ? `<div><i class="fa-solid fa-eye"></i> ${escapeHtml(event.visibility)}</div>` : ""}
       ${event.reminder ? `<div><i class="fa-solid fa-bell"></i> ${escapeHtml(event.reminder)}</div>` : ""}
-      ${event.repeat ? `<div><i class="fa-solid fa-rotate"></i> ${escapeHtml(event.repeat)}</div>` : ""}
+      ${repeatLabel ? `<div><i class="fa-solid fa-rotate"></i> ${escapeHtml(repeatLabel)}</div>` : ""}
       ${link ? `<div><i class="fa-solid fa-link"></i> ${link}</div>` : ""}
       ${event.description ? `<div>${escapeHtml(event.description)}</div>` : ""}
     </div>
   `;
+}
+
+function formatRepeatLabel(event) {
+  if (!event.repeat || event.repeat === "None") return "";
+  if (event.repeat !== "Custom") return event.repeat;
+  const days = event.repeatDays || [];
+  return days.length ? `Custom (${days.join(", ")})` : "Custom";
 }
 
 function getEventFormData() {
@@ -581,6 +736,8 @@ function getEventFormData() {
   let startTime = elements.eventStart.value || formatTimeInput(new Date());
   let endTime = elements.eventEnd.value || addMinutesToTime(startTime, 60);
   const allDay = elements.eventAllDay.checked;
+  const repeat = elements.eventRepeat.value;
+  const repeatDays = repeat === "Custom" ? getRepeatDays() : [];
   if (allDay) {
     startTime = "00:00";
     endTime = "23:59";
@@ -598,13 +755,32 @@ function getEventFormData() {
     calendar: elements.eventCalendar.value,
     visibility: elements.eventVisibility.value,
     reminder: elements.eventReminder.value,
-    repeat: elements.eventRepeat.value,
+    repeat,
+    repeatDays,
     location: elements.eventLocation.value.trim(),
     link: elements.eventLink.value.trim(),
     guests: elements.eventGuests.value.trim(),
     description: elements.eventDescription.value.trim(),
     color: elements.eventColor.value
   };
+}
+
+function getRepeatDays() {
+  if (!elements.eventRepeatDays) return [];
+  return elements.eventRepeatDays.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.value);
+}
+
+function setRepeatDays(days) {
+  if (!elements.eventRepeatDays) return;
+  const daySet = new Set(days);
+  elements.eventRepeatDays.forEach((checkbox) => {
+    checkbox.checked = daySet.has(checkbox.value);
+  });
+}
+
+function toggleRepeatCustom(show) {
+  if (!elements.eventRepeatCustom) return;
+  elements.eventRepeatCustom.classList.toggle("active", show);
 }
 
 function getTodoFormData() {
@@ -629,6 +805,9 @@ function clearEventForm() {
   elements.eventDate.value = getTodayISO();
   elements.eventStart.value = "";
   elements.eventEnd.value = "";
+  elements.eventRepeat.value = "None";
+  setRepeatDays([]);
+  toggleRepeatCustom(false);
   elements.eventColor.value = colorPalette[0];
   elements.eventStart.disabled = false;
   elements.eventEnd.disabled = false;
@@ -652,7 +831,9 @@ function fillEventForm(id) {
   elements.eventCalendar.value = event.calendar;
   elements.eventVisibility.value = event.visibility;
   elements.eventReminder.value = event.reminder;
-  elements.eventRepeat.value = event.repeat;
+  elements.eventRepeat.value = event.repeat || "None";
+  setRepeatDays(event.repeatDays || []);
+  toggleRepeatCustom(elements.eventRepeat.value === "Custom");
   elements.eventLocation.value = event.location;
   elements.eventLink.value = event.link;
   elements.eventGuests.value = event.guests;
@@ -721,6 +902,34 @@ function getTodoStatus(todo) {
     return { status: "upcoming", label: "Starts soon" };
   }
   return { status: "active", label: "In progress" };
+}
+
+function getTodoPriority(todo, status = getTodoStatus(todo)) {
+  if (status.status === "overdue") {
+    return "urgent";
+  }
+  return todo.priority || "normal";
+}
+
+function pruneExpiredCompletedTodos() {
+  const today = getTodayISO();
+  const before = state.todos.length;
+  state.todos = state.todos.filter((todo) => {
+    return !(todo.completed && todo.dueDate && todo.dueDate < today);
+  });
+  if (state.todos.length !== before) {
+    saveState();
+  }
+}
+
+function getVisibleTodos() {
+  const today = getTodayISO();
+  return state.todos.filter((todo) => {
+    if (!state.showFullTodoList && todo.startDate && todo.startDate > today) {
+      return false;
+    }
+    return true;
+  });
 }
 
 function formatDateRange(start, due) {
@@ -803,10 +1012,35 @@ function sortEventsByDate(a, b) {
   return a.date.localeCompare(b.date);
 }
 
-function sortTodosByDate(a, b) {
-  const dateA = a.dueDate || a.startDate || "";
-  const dateB = b.dueDate || b.startDate || "";
-  return dateA.localeCompare(dateB);
+function sortTodosByPriorityThenDate(a, b) {
+  const statusA = getTodoStatus(a);
+  const statusB = getTodoStatus(b);
+  const completedA = statusA.status === "completed";
+  const completedB = statusB.status === "completed";
+  if (completedA !== completedB) {
+    return completedA ? 1 : -1;
+  }
+  const rankA = getTodoPriorityRank(a, statusA);
+  const rankB = getTodoPriorityRank(b, statusB);
+  if (rankA !== rankB) {
+    return rankB - rankA;
+  }
+  return getTodoSortDate(a).localeCompare(getTodoSortDate(b));
+}
+
+function sortTodosByDueDate(a, b) {
+  return getTodoSortDate(a).localeCompare(getTodoSortDate(b));
+}
+
+function getTodoSortDate(todo) {
+  return todo.dueDate || todo.startDate || "9999-12-31";
+}
+
+function getTodoPriorityRank(todo, status = getTodoStatus(todo)) {
+  const priority = getTodoPriority(todo, status);
+  if (priority === "urgent") return 3;
+  if (priority === "important") return 2;
+  return 1;
 }
 
 function isWithinDays(targetDate, startDate, range) {

@@ -72,120 +72,18 @@
               <h2>Today's schedule</h2>
               <p>Only your local-day events are surfaced here.</p>
             </div>
-            <div class="panel-badge">
-              <i class="fa-solid fa-calendar-day"></i>
-              <span id="calendar-summary">No events</span>
+            <div class="panel-controls">
+              <div class="panel-badge">
+                <i class="fa-solid fa-calendar-day"></i>
+                <span id="calendar-summary">No events</span>
+              </div>
+              <button id="open-event-modal" class="icon-button panel-action" type="button" title="Add event">
+                <i class="fa-solid fa-plus"></i>
+              </button>
             </div>
           </div>
           <div class="panel-body calendar-body">
-            <div class="calendar-grid">
-              <div class="form-card">
-                <div class="card-header">
-                  <h3>Create event</h3>
-                  <p>Build out rich details like a full calendar.</p>
-                </div>
-                <form id="event-form" class="form-grid">
-                  <input type="hidden" id="event-id" />
-                  <label class="field span-2">
-                    Title
-                    <input id="event-title" type="text" placeholder="Stand-up sync" required />
-                  </label>
-                  <label class="field">
-                    Date
-                    <input id="event-date" type="date" />
-                  </label>
-                  <label class="field">
-                    Start
-                    <input id="event-start" type="time" />
-                  </label>
-                  <label class="field">
-                    End
-                    <input id="event-end" type="time" />
-                  </label>
-                  <label class="field toggle">
-                    All-day
-                    <input id="event-allday" type="checkbox" />
-                    <span class="toggle-slider"></span>
-                  </label>
-                  <label class="field">
-                    Priority
-                    <select id="event-priority">
-                      <option value="normal">Normal</option>
-                      <option value="important">Important</option>
-                      <option value="urgent">Urgent</option>
-                    </select>
-                  </label>
-                  <label class="field">
-                    Calendar
-                    <select id="event-calendar">
-                      <option value="Personal">Personal</option>
-                      <option value="Work">Work</option>
-                      <option value="Focus">Focus</option>
-                      <option value="Social">Social</option>
-                    </select>
-                  </label>
-                  <label class="field">
-                    Visibility
-                    <select id="event-visibility">
-                      <option value="Default">Default</option>
-                      <option value="Private">Private</option>
-                      <option value="Public">Public</option>
-                    </select>
-                  </label>
-                  <label class="field">
-                    Reminder
-                    <select id="event-reminder">
-                      <option value="None">None</option>
-                      <option value="5 minutes">5 minutes</option>
-                      <option value="15 minutes">15 minutes</option>
-                      <option value="30 minutes">30 minutes</option>
-                      <option value="1 hour">1 hour</option>
-                    </select>
-                  </label>
-                  <label class="field">
-                    Repeat
-                    <select id="event-repeat">
-                      <option value="None">Does not repeat</option>
-                      <option value="Daily">Daily</option>
-                      <option value="Weekly">Weekly</option>
-                      <option value="Monthly">Monthly</option>
-                    </select>
-                  </label>
-                  <label class="field span-2">
-                    Location
-                    <input id="event-location" type="text" placeholder="Studio A or Zoom" />
-                  </label>
-                  <label class="field span-2">
-                    Meeting link
-                    <input id="event-link" type="url" placeholder="https://meet.google.com/..." />
-                  </label>
-                  <label class="field span-2">
-                    Guests
-                    <input id="event-guests" type="text" placeholder="alex@, dev team, ..." />
-                  </label>
-                  <label class="field span-2">
-                    Description
-                    <textarea id="event-description" rows="3" placeholder="Agenda, notes, prep..."></textarea>
-                  </label>
-                  <label class="field span-2 color-field">
-                    Event color
-                    <div class="color-row">
-                      <input id="event-color" type="color" value="#6c7bff" />
-                      <div class="color-palette" id="event-color-palette"></div>
-                    </div>
-                  </label>
-                  <div class="form-actions span-2">
-                    <button class="primary" type="submit">
-                      <i class="fa-solid fa-plus"></i>
-                      Save event
-                    </button>
-                    <button class="ghost" id="event-clear" type="button">
-                      Clear
-                    </button>
-                  </div>
-                </form>
-              </div>
-
+            <div class="calendar-grid single-column">
               <div class="list-card">
                 <div class="card-header">
                   <h3>Today</h3>
@@ -207,60 +105,18 @@
               <h2>To-do command list</h2>
               <p>Track tasks with future release dates and due dates.</p>
             </div>
-            <div class="panel-badge">
-              <i class="fa-solid fa-list-check"></i>
-              <span id="todo-summary">No tasks</span>
+            <div class="panel-controls">
+              <div class="panel-badge">
+                <i class="fa-solid fa-list-check"></i>
+                <span id="todo-summary">No tasks</span>
+              </div>
+              <button id="open-todo-modal" class="icon-button panel-action" type="button" title="Add task">
+                <i class="fa-solid fa-plus"></i>
+              </button>
             </div>
           </div>
           <div class="panel-body todo-body">
-            <div class="todo-grid">
-              <div class="form-card">
-                <div class="card-header">
-                  <h3>Add task</h3>
-                  <p>Attach start dates, links, and priority.</p>
-                </div>
-                <form id="todo-form" class="form-grid">
-                  <input type="hidden" id="todo-id" />
-                  <label class="field span-2">
-                    Task
-                    <input id="todo-title" type="text" placeholder="Outline chapter 5" required />
-                  </label>
-                  <label class="field">
-                    Start date
-                    <input id="todo-start" type="date" />
-                  </label>
-                  <label class="field">
-                    Due date
-                    <input id="todo-due" type="date" />
-                  </label>
-                  <label class="field span-2">
-                    Reference link
-                    <input id="todo-link" type="url" placeholder="https://..." />
-                  </label>
-                  <label class="field">
-                    Priority
-                    <select id="todo-priority">
-                      <option value="normal">Normal</option>
-                      <option value="important">Important</option>
-                      <option value="urgent">Urgent</option>
-                    </select>
-                  </label>
-                  <label class="field span-2">
-                    Notes
-                    <textarea id="todo-notes" rows="3" placeholder="Requirements, notes, blockers..."></textarea>
-                  </label>
-                  <div class="form-actions span-2">
-                    <button class="primary" type="submit">
-                      <i class="fa-solid fa-plus"></i>
-                      Save task
-                    </button>
-                    <button class="ghost" id="todo-clear" type="button">
-                      Clear
-                    </button>
-                  </div>
-                </form>
-              </div>
-
+            <div class="todo-grid single-column">
               <div class="list-card">
                 <div class="card-header">
                   <h3>Task queue</h3>
@@ -268,7 +124,13 @@
                 </div>
                 <div class="list-header">
                   <span class="list-count" id="todo-count">0 tasks</span>
-                  <span class="list-hint">Tap to complete</span>
+                  <div class="list-actions">
+                    <span class="list-hint">Tap to complete</span>
+                    <label class="toggle-inline">
+                      <input id="todo-full-toggle" type="checkbox" />
+                      <span>See full list</span>
+                    </label>
+                  </div>
                 </div>
                 <div id="todo-list" class="scrollable"></div>
               </div>
@@ -283,30 +145,21 @@
                 <h2>Status studio</h2>
                 <p>Set quick mood or availability states.</p>
               </div>
-              <div class="panel-badge">
-                <i class="fa-solid fa-sparkles"></i>
-                <span id="status-summary">No statuses</span>
+              <div class="panel-controls">
+                <div class="panel-badge">
+                  <i class="fa-solid fa-sparkles"></i>
+                  <span id="status-summary">No statuses</span>
+                </div>
+                <button id="open-status-modal" class="icon-button panel-action" type="button" title="Add status">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
               </div>
             </div>
             <div class="panel-body">
-              <form id="status-form" class="status-form">
-                <label class="field">
-                  Label
-                  <input id="status-label" type="text" placeholder="Focused" required />
-                </label>
-                <label class="field">
-                  Color
-                  <input id="status-color" type="color" value="#22c55e" />
-                </label>
-                <label class="field">
-                  Image
-                  <input id="status-image" type="file" accept="image/*" />
-                </label>
-                <button class="primary" type="submit">
-                  <i class="fa-solid fa-plus"></i>
-                  Add status
-                </button>
-              </form>
+              <label class="field">
+                Displayed status
+                <select id="status-select"></select>
+              </label>
               <div id="status-list" class="status-list scrollable"></div>
             </div>
           </section>
@@ -356,6 +209,222 @@
           </section>
         </section>
       </main>
+    </div>
+
+    <div id="event-modal" class="modal" aria-hidden="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-content form-card">
+        <div class="modal-header">
+          <div>
+            <h3>Create event</h3>
+            <p>Build out rich details like a full calendar.</p>
+          </div>
+          <button class="icon-button" type="button" data-modal-close aria-label="Close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <form id="event-form" class="form-grid">
+          <input type="hidden" id="event-id" />
+          <label class="field span-2">
+            Title
+            <input id="event-title" type="text" placeholder="Stand-up sync" required />
+          </label>
+          <label class="field">
+            Date
+            <input id="event-date" type="date" />
+          </label>
+          <label class="field">
+            Start
+            <input id="event-start" type="time" />
+          </label>
+          <label class="field">
+            End
+            <input id="event-end" type="time" />
+          </label>
+          <label class="field toggle">
+            All-day
+            <input id="event-allday" type="checkbox" />
+            <span class="toggle-slider"></span>
+          </label>
+          <label class="field">
+            Priority
+            <select id="event-priority">
+              <option value="normal">Normal</option>
+              <option value="important">Important</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </label>
+          <label class="field">
+            Calendar
+            <select id="event-calendar">
+              <option value="Personal">Personal</option>
+              <option value="Work">Work</option>
+              <option value="Focus">Focus</option>
+              <option value="Social">Social</option>
+            </select>
+          </label>
+          <label class="field">
+            Visibility
+            <select id="event-visibility">
+              <option value="Default">Default</option>
+              <option value="Private">Private</option>
+              <option value="Public">Public</option>
+            </select>
+          </label>
+          <label class="field">
+            Reminder
+            <select id="event-reminder">
+              <option value="None">None</option>
+              <option value="5 minutes">5 minutes</option>
+              <option value="15 minutes">15 minutes</option>
+              <option value="30 minutes">30 minutes</option>
+              <option value="1 hour">1 hour</option>
+            </select>
+          </label>
+          <label class="field">
+            Repeat
+            <select id="event-repeat">
+              <option value="None">Does not repeat</option>
+              <option value="Daily">Daily</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Custom">Custom</option>
+            </select>
+          </label>
+          <div class="field span-2 repeat-custom" id="event-repeat-custom">
+            <span>Repeat on</span>
+            <div class="repeat-days">
+              <label class="repeat-day"><input type="checkbox" value="Mon" data-day="Mon" />Mon</label>
+              <label class="repeat-day"><input type="checkbox" value="Tue" data-day="Tue" />Tue</label>
+              <label class="repeat-day"><input type="checkbox" value="Wed" data-day="Wed" />Wed</label>
+              <label class="repeat-day"><input type="checkbox" value="Thu" data-day="Thu" />Thu</label>
+              <label class="repeat-day"><input type="checkbox" value="Fri" data-day="Fri" />Fri</label>
+              <label class="repeat-day"><input type="checkbox" value="Sat" data-day="Sat" />Sat</label>
+              <label class="repeat-day"><input type="checkbox" value="Sun" data-day="Sun" />Sun</label>
+            </div>
+          </div>
+          <label class="field span-2">
+            Location
+            <input id="event-location" type="text" placeholder="Studio A or Zoom" />
+          </label>
+          <label class="field span-2">
+            Meeting link
+            <input id="event-link" type="url" placeholder="https://meet.google.com/..." />
+          </label>
+          <label class="field span-2">
+            Guests
+            <input id="event-guests" type="text" placeholder="alex@, dev team, ..." />
+          </label>
+          <label class="field span-2">
+            Description
+            <textarea id="event-description" rows="3" placeholder="Agenda, notes, prep..."></textarea>
+          </label>
+          <label class="field span-2 color-field">
+            Event color
+            <div class="color-row">
+              <input id="event-color" type="color" value="#6c7bff" />
+              <div class="color-palette" id="event-color-palette"></div>
+            </div>
+          </label>
+          <div class="form-actions span-2">
+            <button class="primary" type="submit">
+              <i class="fa-solid fa-plus"></i>
+              Save event
+            </button>
+            <button class="ghost" id="event-clear" type="button">
+              Clear
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="todo-modal" class="modal" aria-hidden="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-content form-card">
+        <div class="modal-header">
+          <div>
+            <h3>Add task</h3>
+            <p>Attach start dates, links, and priority.</p>
+          </div>
+          <button class="icon-button" type="button" data-modal-close aria-label="Close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <form id="todo-form" class="form-grid">
+          <input type="hidden" id="todo-id" />
+          <label class="field span-2">
+            Task
+            <input id="todo-title" type="text" placeholder="Outline chapter 5" required />
+          </label>
+          <label class="field">
+            Start date
+            <input id="todo-start" type="date" />
+          </label>
+          <label class="field">
+            Due date
+            <input id="todo-due" type="date" />
+          </label>
+          <label class="field span-2">
+            Reference link
+            <input id="todo-link" type="url" placeholder="https://..." />
+          </label>
+          <label class="field">
+            Priority
+            <select id="todo-priority">
+              <option value="normal">Normal</option>
+              <option value="important">Important</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </label>
+          <label class="field span-2">
+            Notes
+            <textarea id="todo-notes" rows="3" placeholder="Requirements, notes, blockers..."></textarea>
+          </label>
+          <div class="form-actions span-2">
+            <button class="primary" type="submit">
+              <i class="fa-solid fa-plus"></i>
+              Save task
+            </button>
+            <button class="ghost" id="todo-clear" type="button">
+              Clear
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="status-modal" class="modal" aria-hidden="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-content form-card">
+        <div class="modal-header">
+          <div>
+            <h3>Add status</h3>
+            <p>Set quick mood or availability states.</p>
+          </div>
+          <button class="icon-button" type="button" data-modal-close aria-label="Close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <form id="status-form" class="status-form">
+          <label class="field">
+            Label
+            <input id="status-label" type="text" placeholder="Focused" required />
+          </label>
+          <label class="field">
+            Color
+            <input id="status-color" type="color" value="#22c55e" />
+          </label>
+          <label class="field">
+            Image
+            <input id="status-image" type="file" accept="image/*" />
+          </label>
+          <button class="primary" type="submit">
+            <i class="fa-solid fa-plus"></i>
+            Add status
+          </button>
+        </form>
+      </div>
     </div>
 
     <div id="hover-tooltip" class="hover-tooltip" aria-hidden="true"></div>
