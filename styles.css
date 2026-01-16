@@ -83,6 +83,7 @@ body[data-theme="mono"] {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 
 .app-layout {
@@ -1929,6 +1930,27 @@ input[type="color"]:focus {
 }
 
 /* Settings Menu Styles */
+/* Sticky Image (Bottom Left) */
+.sticky-image {
+  position: absolute;
+  bottom: 24px;
+  left: 48px;
+  z-index: 50;
+  height: 120px;
+  width: auto;
+  opacity: 0.85;
+  transition: opacity var(--transition-smooth), transform var(--transition-smooth);
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+.sticky-image:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.4));
+}
+
 .settings-menu-wrapper {
   position: fixed;
   bottom: 24px;
