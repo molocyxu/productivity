@@ -1,4 +1,5 @@
 const STORAGE_KEY = "orbit_state_v1";
+const PRESETS_STORAGE_KEY = "orbit_presets_v1";
 const INSIGHT_RANGE_DAYS = 7;
 
 const themeOptions = [
@@ -198,6 +199,17 @@ function cacheElements() {
   elements.resetData = document.getElementById("reset-data");
   elements.settingsMenuButton = document.getElementById("settings-menu-button");
   elements.settingsMenuDropdown = document.getElementById("settings-menu-dropdown");
+  elements.savePresetBtn = document.getElementById("save-preset");
+  elements.loadPresetBtn = document.getElementById("load-preset");
+  elements.savePresetModal = document.getElementById("save-preset-modal");
+  elements.savePresetModalClose = document.getElementById("save-preset-modal-close");
+  elements.savePresetCancel = document.getElementById("save-preset-cancel");
+  elements.savePresetConfirm = document.getElementById("save-preset-confirm");
+  elements.presetNameInput = document.getElementById("preset-name-input");
+  elements.loadPresetModal = document.getElementById("load-preset-modal");
+  elements.loadPresetModalClose = document.getElementById("load-preset-modal-close");
+  elements.loadPresetCancel = document.getElementById("load-preset-cancel");
+  elements.presetList = document.getElementById("preset-list");
   elements.tooltip = document.getElementById("hover-tooltip");
 }
 
@@ -887,7 +899,7 @@ function bindControls() {
 
   // Reset data with confirmation
   if (elements.resetData) {
-  elements.resetData.addEventListener("click", () => {
+    elements.resetData.addEventListener("click", () => {
       openConfirmModal({
         title: "Reset all data",
         message: "Are you sure you want to reset all data for this dashboard? This cannot be undone.",
@@ -895,17 +907,93 @@ function bindControls() {
         confirmText: "Reset",
         onConfirm: () => {
           state = { ...defaultState, theme: state.theme, currentStatus: "invisible" };
-    saveState();
-    clearEventForm();
-    clearTodoForm();
-    elements.notesInput.value = "";
-    renderAll();
+          saveState();
+          clearEventForm();
+          clearTodoForm();
+          elements.notesInput.value = "";
+          renderAll();
           if (elements.settingsMenuDropdown) {
             elements.settingsMenuDropdown.classList.remove("visible");
           }
         }
       });
-  });
+    });
+  }
+
+  // Save preset handlers
+  if (elements.savePresetBtn) {
+    elements.savePresetBtn.addEventListener("click", () => {
+      openSavePresetModal();
+      if (elements.settingsMenuDropdown) {
+        elements.settingsMenuDropdown.classList.remove("visible");
+      }
+    });
+  }
+
+  if (elements.savePresetModalClose) {
+    elements.savePresetModalClose.addEventListener("click", closeSavePresetModal);
+  }
+
+  if (elements.savePresetCancel) {
+    elements.savePresetCancel.addEventListener("click", closeSavePresetModal);
+  }
+
+  if (elements.savePresetConfirm) {
+    elements.savePresetConfirm.addEventListener("click", () => {
+      const presetName = elements.presetNameInput.value.trim();
+      if (!presetName) {
+        elements.presetNameInput.focus();
+        return;
+      }
+      savePreset(presetName);
+      // Modal will close automatically after success feedback
+    });
+  }
+
+  // Allow Enter key to save preset
+  if (elements.presetNameInput) {
+    elements.presetNameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const presetName = elements.presetNameInput.value.trim();
+        if (presetName) {
+          savePreset(presetName);
+          // Modal will close automatically after success feedback
+        }
+      }
+    });
+  }
+
+  if (elements.savePresetModal) {
+    const overlay = elements.savePresetModal.querySelector(".modal-overlay");
+    if (overlay) {
+      overlay.addEventListener("click", closeSavePresetModal);
+    }
+  }
+
+  // Load preset handlers
+  if (elements.loadPresetBtn) {
+    elements.loadPresetBtn.addEventListener("click", () => {
+      openLoadPresetModal();
+      if (elements.settingsMenuDropdown) {
+        elements.settingsMenuDropdown.classList.remove("visible");
+      }
+    });
+  }
+
+  if (elements.loadPresetModalClose) {
+    elements.loadPresetModalClose.addEventListener("click", closeLoadPresetModal);
+  }
+
+  if (elements.loadPresetCancel) {
+    elements.loadPresetCancel.addEventListener("click", closeLoadPresetModal);
+  }
+
+  if (elements.loadPresetModal) {
+    const overlay = elements.loadPresetModal.querySelector(".modal-overlay");
+    if (overlay) {
+      overlay.addEventListener("click", closeLoadPresetModal);
+    }
   }
 }
 
@@ -2221,6 +2309,232 @@ function updateFileInputLabel() {
     label.classList.remove("has-file");
     label.querySelector("span").textContent = "Choose image...";
   }
+}
+
+// Preset Management Functions
+function getPresets() {
+  try {
+    const raw = localStorage.getItem(PRESETS_STORAGE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error("Error loading presets:", error);
+    return {};
+  }
+}
+
+function savePresets(presets) {
+  try {
+    localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(presets));
+  } catch (error) {
+    console.error("Error saving presets:", error);
+    if (error.name === "QuotaExceededError") {
+      alert("Storage quota exceeded. Please delete some presets or clear space.");
+    }
+  }
+}
+
+function savePreset(name) {
+  const presets = getPresets();
+  
+  // Create a complete snapshot of the current state
+  const presetData = {
+    name: name,
+    savedAt: new Date().toISOString(),
+    state: {
+      events: state.events,
+      todos: state.todos,
+      statuses: state.statuses,
+      notes: state.notes,
+      currentStatus: state.currentStatus,
+      splitSizes: state.splitSizes,
+      showFullTodoList: state.showFullTodoList,
+      theme: state.theme
+    }
+  };
+  
+  presets[name] = presetData;
+  savePresets(presets);
+  
+  // Show success feedback
+  if (elements.savePresetConfirm) {
+    const confirmBtn = elements.savePresetConfirm;
+    const originalHTML = confirmBtn.innerHTML;
+    confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Saved!</span>';
+    confirmBtn.style.background = "#22c55e";
+    setTimeout(() => {
+      confirmBtn.innerHTML = originalHTML;
+      confirmBtn.style.background = "";
+      closeSavePresetModal();
+    }, 1500);
+  } else {
+    closeSavePresetModal();
+  }
+  
+  // Refresh preset list if load modal is open
+  if (elements.loadPresetModal && elements.loadPresetModal.classList.contains("visible")) {
+    renderPresetList();
+  }
+}
+
+function loadPreset(name) {
+  const presets = getPresets();
+  const preset = presets[name];
+  
+  if (!preset || !preset.state) {
+    alert("Preset not found or corrupted.");
+    return;
+  }
+  
+  // Restore state
+  state = {
+    ...defaultState,
+    ...preset.state,
+    theme: state.theme // Preserve current theme
+  };
+  
+  saveState();
+  clearEventForm();
+  clearTodoForm();
+  if (elements.notesInput) {
+    elements.notesInput.value = state.notes || "";
+  }
+  renderAll();
+  closeLoadPresetModal();
+}
+
+function deletePreset(name) {
+  const presets = getPresets();
+  delete presets[name];
+  savePresets(presets);
+  renderPresetList();
+}
+
+function openSavePresetModal() {
+  if (!elements.savePresetModal) {
+    console.error("Save preset modal element not found");
+    return;
+  }
+  if (elements.presetNameInput) {
+    elements.presetNameInput.value = "";
+    elements.presetNameInput.focus();
+  }
+  elements.savePresetModal.classList.add("visible");
+  elements.savePresetModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeSavePresetModal() {
+  if (!elements.savePresetModal) return;
+  elements.savePresetModal.classList.remove("visible");
+  elements.savePresetModal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+  if (elements.presetNameInput) {
+    elements.presetNameInput.value = "";
+  }
+}
+
+function openLoadPresetModal() {
+  if (!elements.loadPresetModal) {
+    console.error("Load preset modal element not found");
+    return;
+  }
+  renderPresetList();
+  elements.loadPresetModal.classList.add("visible");
+  elements.loadPresetModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeLoadPresetModal() {
+  if (!elements.loadPresetModal) return;
+  elements.loadPresetModal.classList.remove("visible");
+  elements.loadPresetModal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+
+function renderPresetList() {
+  if (!elements.presetList) return;
+  
+  const presets = getPresets();
+  const presetNames = Object.keys(presets).sort((a, b) => {
+    const dateA = new Date(presets[a].savedAt || 0);
+    const dateB = new Date(presets[b].savedAt || 0);
+    return dateB - dateA; // Most recent first
+  });
+  
+  if (presetNames.length === 0) {
+    elements.presetList.innerHTML = '<div class="empty-state">No saved workspaces</div>';
+    return;
+  }
+  
+  elements.presetList.innerHTML = presetNames.map(name => {
+    const preset = presets[name];
+    const savedDate = preset.savedAt ? new Date(preset.savedAt) : new Date();
+    const dateStr = savedDate.toLocaleDateString(undefined, { 
+      month: "short", 
+      day: "numeric", 
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    const eventCount = preset.state?.events?.length || 0;
+    const todoCount = preset.state?.todos?.length || 0;
+    const statusCount = preset.state?.statuses?.length || 0;
+    
+    return `
+      <div class="preset-item">
+        <div class="preset-item-content">
+          <div class="preset-item-header">
+            <div class="preset-item-name">${escapeHtml(name)}</div>
+            <div class="preset-item-date">${dateStr}</div>
+          </div>
+          <div class="preset-item-stats">
+            <span><i class="fa-solid fa-calendar"></i> ${eventCount} events</span>
+            <span><i class="fa-solid fa-list-check"></i> ${todoCount} tasks</span>
+            <span><i class="fa-solid fa-palette"></i> ${statusCount} statuses</span>
+          </div>
+        </div>
+        <div class="preset-item-actions">
+          <button class="icon-button" data-preset-action="load" data-preset-name="${escapeHtml(name)}" title="Load">
+            <i class="fa-solid fa-folder-open"></i>
+          </button>
+          <button class="icon-button danger" data-preset-action="delete" data-preset-name="${escapeHtml(name)}" title="Delete">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+  
+  // Bind event listeners for preset actions
+  elements.presetList.querySelectorAll("[data-preset-action]").forEach(button => {
+    button.addEventListener("click", (e) => {
+      const action = button.dataset.presetAction;
+      const presetName = button.dataset.presetName;
+      
+      if (action === "load") {
+        openConfirmModal({
+          title: "Load workspace",
+          message: `Load "${presetName}"? This will overwrite your current workspace.`,
+          showRecurringOptions: false,
+          confirmText: "Load",
+          onConfirm: () => {
+            loadPreset(presetName);
+          }
+        });
+      } else if (action === "delete") {
+        openConfirmModal({
+          title: "Delete workspace",
+          message: `Are you sure you want to delete "${presetName}"?`,
+          showRecurringOptions: false,
+          confirmText: "Delete",
+          onConfirm: () => {
+            deletePreset(presetName);
+          }
+        });
+      }
+    });
+  });
 }
 
 function getSampleData() {
