@@ -928,6 +928,50 @@ function bindLists() {
     }
   };
 
+  // Helper for todo toggle button hover (tooltip)
+  const handleTodoToggleHover = {
+    pointerover: (event) => {
+      if (!elements.tooltip) return;
+      const fullBtn = event.target.closest(".toggle-full-list-btn");
+      const completedBtn = event.target.closest(".toggle-completed-btn");
+      let html = "";
+
+      if (fullBtn) {
+        html = buildTodoToggleTooltip("full", state.showFullTodoList);
+      } else if (completedBtn) {
+        html = buildTodoToggleTooltip("completed", state.showCompletedTodos);
+      } else {
+        return;
+      }
+
+      elements.tooltip.innerHTML = html;
+      elements.tooltip.classList.add("visible");
+      positionTooltip(event);
+    },
+    pointermove: (event) => {
+      if (!elements.tooltip || !elements.tooltip.classList.contains("visible")) return;
+      positionTooltip(event);
+    },
+    pointerout: (event) => {
+      const related = event.relatedTarget;
+      if (
+        related &&
+        related.closest &&
+        (related.closest(".toggle-full-list-btn") || related.closest(".toggle-completed-btn"))
+      ) {
+        return;
+      }
+      if (elements.tooltip) {
+        elements.tooltip.classList.remove("visible");
+      }
+    },
+    pointerleave: () => {
+      if (elements.tooltip) {
+        elements.tooltip.classList.remove("visible");
+      }
+    }
+  };
+
   // Bind handlers to today's event list
   elements.eventList.addEventListener("click", handleEventClick);
   elements.eventList.addEventListener("pointerover", handleEventHover.pointerover);
@@ -942,6 +986,18 @@ function bindLists() {
     elements.tomorrowEventList.addEventListener("pointermove", handleEventHover.pointermove);
     elements.tomorrowEventList.addEventListener("pointerout", handleEventHover.pointerout);
     elements.tomorrowEventList.addEventListener("pointerleave", handleEventHover.pointerleave);
+  }
+
+  // Bind tooltip handlers to todo toggle buttons (header)
+  const todoHeader =
+    elements.todoList &&
+    elements.todoList.closest(".list-card") &&
+    elements.todoList.closest(".list-card").querySelector(".list-header");
+  if (todoHeader) {
+    todoHeader.addEventListener("pointerover", handleTodoToggleHover.pointerover);
+    todoHeader.addEventListener("pointermove", handleTodoToggleHover.pointermove);
+    todoHeader.addEventListener("pointerout", handleTodoToggleHover.pointerout);
+    todoHeader.addEventListener("pointerleave", handleTodoToggleHover.pointerleave);
   }
 
   elements.todoList.addEventListener("click", (event) => {
@@ -1752,6 +1808,39 @@ function buildEventTooltip(event) {
       ${event.description ? `<div>${escapeHtml(event.description)}</div>` : ""}
     </div>
   `;
+}
+
+// Tooltip content for todo toggle buttons
+function buildTodoToggleTooltip(kind, isActive) {
+  if (kind === "full") {
+    const title = "Full task list";
+    const mode = isActive ? "Showing all tasks" : "Showing active tasks only";
+    const detail = isActive
+      ? "Includes future tasks that haven't started yet."
+      : "Hides tasks that haven't started yet.";
+    return `
+      <div class="tooltip-title">${title}</div>
+      <div class="tooltip-grid">
+        <div><i class="fa-solid fa-list"></i> ${mode}</div>
+        <div>${detail}</div>
+      </div>
+    `;
+  }
+  if (kind === "completed") {
+    const title = "Completed tasks";
+    const mode = isActive ? "Completed tasks visible" : "Completed tasks hidden";
+    const detail = isActive
+      ? "Shows tasks you've already completed (until their deadline passes)."
+      : "Hides completed tasks to keep the list focused.";
+    return `
+      <div class="tooltip-title">${title}</div>
+      <div class="tooltip-grid">
+        <div><i class="fa-solid fa-check-double"></i> ${mode}</div>
+        <div>${detail}</div>
+      </div>
+    `;
+  }
+  return "";
 }
 
 function getEventFormData() {
