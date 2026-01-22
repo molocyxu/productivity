@@ -1656,7 +1656,12 @@ function renderInsights() {
       checkDate.setDate(checkDate.getDate() + 1);
     }
     return { ...event, nextDate: nextDate || event.date };
-  }).filter(e => e.nextDate);
+  }).filter(e => {
+    if (!e.nextDate) return false;
+    // Check if the event has already completed (for today's events, check if end time has passed)
+    const eventStatus = getEventStatus(e, e.nextDate);
+    return eventStatus.status !== "completed";
+  });
   
   elements.urgentEvents.innerHTML = eventsWithNextDate.length
     ? eventsWithNextDate
